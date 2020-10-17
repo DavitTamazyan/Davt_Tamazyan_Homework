@@ -32,3 +32,25 @@ public:
         
     }
 };
+
+//Runtime: 136 ms, faster than 18.46% of C++ online submissions for Remove Duplicates from Sorted Array.
+//Memory Usage: 14 MB, less than 99.99% of C++ online submissions for Remove Duplicates from Sorted Array.
+
+class Solution {
+public:
+    int removeDuplicates(vector<int>& nums) {
+        
+        if (nums.size() == 0){
+            return 0;
+        }
+        
+        for(int i = 0; i < nums.size() - 1; ++i){
+            if ((nums[i] == nums[i + 1])){
+                nums.erase(nums.begin() + i + 1);
+                --i;
+            }
+        }
+        
+        return nums.size();
+    }
+};
