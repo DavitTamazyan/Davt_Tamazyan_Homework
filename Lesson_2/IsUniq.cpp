@@ -2,10 +2,9 @@ class bitset {
 public:
 
 	bitset(int size) {
-		int* table = new int[size];
-		///
+		this->size = ((size - 1) / reg_size) + 1;
+		long long* table = new long long[size];
 		this->table = table;
-		this->size = size;
 		FillArray(table, size);
 	}
 
@@ -14,30 +13,31 @@ public:
 	}
 
 	bool GetValue(char index) {
-		return table[index];
+		return table[index / reg_size] & (one << (index % reg_size));;
 	}
 
 	void SetValue(char index) {
-		table[index] = 1;
+		table[index/ reg_size] |= (one << (index % reg_size));
 	}
 
 private:
-	int* table;
+	long long* table;
 	int size;
+	long long one = 1;
+	int reg_size = sizeof(long long);
 
-	void FillArray(int* arr, int size) {
+	void FillArray(long long* arr, int size) {
 		for (int i = 0; i < size; ++i) {
 			arr[i] = 0;
 		}
 	}
 
-	void PrintArray(int* arr, int size) {
+	void PrintArray(long long* arr, int size) {
 		for (int i = 0; i < size; ++i) {
 			cout << arr[i] << "'";
 		}
 	}
 };
-
 bool IsUniq(string s) {
 	
 	bitset table(700);
