@@ -7,8 +7,6 @@ string intToRoman(int num) {
 	string result;
 
 	for (int i = 1; i < 8; ++i) {
-		cout << num << endl;
-
 		if (num / divider == 4) {
 			if (((i % 2)) & (Roman_numbers[i - 1] - num <= Roman_numbers[i])) {
 				result += Roman_numerals[i]; result += Roman_numerals[i - 1];
