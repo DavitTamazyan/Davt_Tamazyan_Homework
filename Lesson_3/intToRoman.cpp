@@ -11,32 +11,25 @@ string intToRoman(int num) {
 
 		if (num / divider == 4) {
 			if (((i % 2)) & (Roman_numbers[i - 1] - num <= Roman_numbers[i])) {
-				result += Roman_numerals[i];
-				result += Roman_numerals[i - 1];
+				result += Roman_numerals[i]; result += Roman_numerals[i - 1];
 				num = num - (Roman_numbers[i - 1] - Roman_numbers[i]);
 			}
 			else {
-				result += Roman_numerals[i];
-				result += Roman_numerals[i];
-				result += Roman_numerals[i];
+				result += Roman_numerals[i];result += Roman_numerals[i];result += Roman_numerals[i];
 				num = num % divider;
 			}
 		}
 		else if(num / divider == 3) {
-			result += Roman_numerals[i];
-			result += Roman_numerals[i];
-			result += Roman_numerals[i];
+			result += Roman_numerals[i];result += Roman_numerals[i];result += Roman_numerals[i];
 			num = num % divider;
 		}
 		else if (num / divider == 2) {
-			result += Roman_numerals[i];
-			result += Roman_numerals[i];
+			result += Roman_numerals[i];result += Roman_numerals[i];
 			num = num % divider;
 		}
 		else if (num / divider == 1) {
 			if ((!(i % 2)) & (Roman_numbers[i - 1] - num <= Roman_numbers[i + 1])) {
-				result += Roman_numerals[i + 1];
-				result += Roman_numerals[i - 1];
+				result += Roman_numerals[i + 1];result += Roman_numerals[i - 1];
 				num = num - (Roman_numbers[i - 1] - Roman_numbers[i + 1]);
 			}
 			else {
