@@ -281,6 +281,94 @@ public:
         }
     }
 
+    /// operator >= 
+    bool operator >(int val) {
+        if (state == varstate::INT) {
+            return (varint >= val);
+        }
+    }
+
+    bool operator >(char val) {
+        return false;
+    }
+
+    bool operator >(bool val) {
+        return false;
+    }
+
+    bool operator >(double val) {
+        if (state == varstate::DOUBLE) {
+            return (vardouble >= val);
+        }
+    }
+
+    bool operator >(var val) {
+        if (this->state == val.state) {
+            if (this->state == varstate::UNDEFINED) {
+                return false;
+            }
+            else if (this->state == varstate::INT) {
+                return (this->varint >= val.varint);
+            }
+            else if (this->state == varstate::BOOL) {
+                return false;
+            }
+            else if (this->state == varstate::CHAR) {
+                return false;
+            }
+            else if (this->state == varstate::DOUBLE) {
+                return (this->vardouble >= val.vardouble);
+            }
+        }
+        else {
+            return false;
+        }
+    }
+
+    /// operator <= 
+    bool operator <(int val) {
+        if (state == varstate::INT) {
+            return (varint <= val);
+        }
+    }
+
+    bool operator <(char val) {
+        return false;
+    }
+
+    bool operator <(bool val) {
+        return false;
+    }
+
+    bool operator <(double val) {
+        if (state == varstate::DOUBLE) {
+            return (vardouble <= val);
+        }
+    }
+
+    bool operator <(var val) {
+        if (this->state == val.state) {
+            if (this->state == varstate::UNDEFINED) {
+                return false;
+            }
+            else if (this->state == varstate::INT) {
+                return (this->varint <= val.varint);
+            }
+            else if (this->state == varstate::BOOL) {
+                return false;
+            }
+            else if (this->state == varstate::CHAR) {
+                return false;
+            }
+            else if (this->state == varstate::DOUBLE) {
+                return (this->vardouble <= val.vardouble);
+            }
+        }
+        else {
+            return false;
+        }
+    }
+
     // Debug
     void printvalue() {
         switch (state)
@@ -358,8 +446,8 @@ public:
 
     void printMem() {
         for (int i = 0; i < index; ++i) {
-            std::cout << "arr_value[" << i << "]" << " = ";
-            arr_value[i].printvalue();
+std::cout << "arr_value[" << i << "]" << " = ";
+arr_value[i].printvalue();
         }
     }
 
@@ -390,6 +478,33 @@ public:
 private:
     int index;
 };
+
+void ArgumentCheck(int argc, char* argv[], int argc_exp) {
+    if (argc != argc_exp) {
+        std::cout << "The expected argument count is " << argc_exp <<
+            " \n\r Given argument count is " << argc << std::endl;
+        exit(1);
+    }
+    else {
+        std::cout << "The expected argument count is OK :)" << std::endl;
+    }
+}
+
+void CheckFile(char* path) {
+
+    std::ifstream inFile;
+    inFile.open(path);
+
+    if (!inFile) {
+        std::cerr << "Unable to open file " << path << std::endl;
+        exit(1);
+    }
+    else {
+        std::cerr << "File exist :)" << std::endl;
+    }
+
+    inFile.close();
+}
 
 str detectWord(str line, unsigned int index) {
     if (index > line.size()) {
@@ -428,16 +543,29 @@ bool intOrDouble(str line, unsigned int index) {
     return true;
 }
 
-/// Function Declaration
-void ArgumentCheck(int argc, char* argv[], int argc_exp);
-void CheckFile(char* path);
-void CreateTmp(char* path);
-int interpretr(std::string line);
-void exeline(std::vector<std::string>);
+void fixSpaces(str& line) {
+    bool trigger = false;
+    for (int i = 0; i < line.size(); ++i) {
+        if ((' ' == line[i]) && trigger) {
+            line.erase(i, 1);
+            --i;
+        }
+        else if (' ' == line[i]) {
+            trigger = true;
+        }
+        else if (' ' != line[i]) {
+            trigger = false;
+        }
+    }
 
-std::vector<std::string> var_list;
+    if (' ' == line[0]) {
+        line.erase(0, 1);
+    }
 
-int a;
+    if (' ' == line[line.size() - 2]) {
+        line.erase((line.size() - 2), 1);
+    }
+}
 
 /// Top
 int main(int argc, char* argv[]) {
@@ -451,6 +579,8 @@ int main(int argc, char* argv[]) {
 
 
     while (std::getline(inFile, line)) {
+        fixSpaces(line);
+
         if (skip) {
             if ("end" == line) {
                 skip = false;
@@ -568,7 +698,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             else if (!(line.compare(0, 5, "when "))) {
-                if (mycpu.findElement(detectWord(line, 7)) != -1) {
+                if (mycpu.findElement(detectWord(line, 10)) != -1) {
                     int index1 = mycpu.findElement(detectWord(line, 6));
                     int index2 = mycpu.findElement(detectWord(line, 10));
                     if (line[8] == '=') {
@@ -617,113 +747,5 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    //mycpu.printMem();
     inFile.close();
-}
-
-/// Function Body
-/// ///uncomment exit(1)
-void ArgumentCheck(int argc, char* argv[], int argc_exp) {
-    if (argc != argc_exp) {
-        std::cout << "The expected argument count is " << argc_exp <<
-            " \n\r Given argument count is " << argc << std::endl;
-        exit(1);
-    }
-    else {
-        std::cout << "The expected argument count is OK :)" << std::endl;
-    }
-}
-///uncomment exit(1)
-void CheckFile(char* path) {
-
-    std::ifstream inFile;
-    inFile.open(path);
-
-    if (!inFile) {
-        std::cerr << "Unable to open file " << path << std::endl;
-        exit(1);
-    }
-    else {
-        std::cerr << "File exist :)" << std::endl;
-    }
-
-    inFile.close();
-}
-
-void CreateTmp(char* path) {
-    std::ifstream inFile(path);
-    std::string line;
-    ///
-    std::cout << "Start Interpretator" << std::endl;
-
-    while (std::getline(inFile, line)) {
-        //std::cout << "Line = " << line << std::endl;
-        if (interpretr(line) == -1) {
-            break;
-        }
-    }
-
-    std::cout << "End Interpretator" << std::endl;
-    /// 
-    inFile.close();
-}
-
-int interpretr(std::string line) {
-    bool end = 0;
-    int i = 0;
-    std::string str_tmp = "";
-    std::string word = "";
-    std::vector<std::string> line_vector;
-    while (!end) {
-        str_tmp = line[i];
-        std::cout << str_tmp << std::endl;
-        if (str_tmp != " " && str_tmp != ";") {
-            word = word + str_tmp;
-            ++i;
-        }
-        else if (str_tmp == ";") {
-            std::cout << word << std::endl;
-            line_vector.push_back(word);
-            end = true;
-        }
-        else if (word != "") {
-            std::cout << word << std::endl;
-            line_vector.push_back(word);
-            word = "";
-            ++i;
-        }
-        else {
-            ++i;
-        }
-    }
-    exeline(line_vector);
-    return 0;
-}
-
-void exeline(std::vector<std::string> line_vector) {
-    std::ofstream tmpFile("tmp.txt");
-    if (line_vector[0] == "var") {
-        std::cout << "var ";
-        std::cout << line_vector[1];
-        var_list.push_back(line_vector[1]);
-        if (line_vector[2] == "<=") {
-            std::cout << "(";
-            std::cout << line_vector[3];
-            std::cout << ")";
-        }
-        else if (line_vector[2] == "=") {
-
-        }
-
-        std::cout << ";";
-        std::cout << "\n";
-    }
-    else if (std::find(line_vector.begin(), line_vector.end(), line_vector[0]) != line_vector.end()) {
-        std::cout << line_vector[0];
-        std::cout << "(";
-        std::cout << line_vector[2];
-        std::cout << ")";
-        std::cout << "\n";
-    }
-
 }
