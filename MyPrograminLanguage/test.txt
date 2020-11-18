@@ -1,0 +1,21 @@
+var a <= 10;
+
+printtype a;
+printval a;
+
+when (a > 10) then
+  printtxt a is 1;
+  printtxt true;
+end
+
+a <= 's';
+
+printtype a;
+printval a;
+
+when (a = 's') then
+  printtxt a is s;
+  printtxt true;
+end
+
+printtxt :);
