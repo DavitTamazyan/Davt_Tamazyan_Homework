@@ -1,8 +1,11 @@
 #include<iostream>
 #include<fstream>
+#include<ostream>
 #include<string>
-#include<vector>
-#include<algorithm>
+//#include<vector>
+//#include<algorithm>
+
+#define LOGICAL (('+' == line[2] || '-' == line[2] || '*' == line[2] || '/' == line[2]) && '=' == line[3])
 
 using str = std::string;
 
@@ -92,6 +95,8 @@ public:
         return;
     }
 
+    /// + - * /
+
     /// += -= *= /=
     void operator +=(int val) {
         if (state == varstate::INT) {
@@ -102,6 +107,13 @@ public:
     void operator +=(double val) {
         if (state == varstate::DOUBLE) {
             vardouble = vardouble + val;
+        }
+    }
+
+    void operator +=(var val) {
+        if (this->state == val.state) {
+            this->varint += val.varint;
+            this->vardouble += val.vardouble;
         }
     }
 
@@ -117,6 +129,13 @@ public:
         }
     }
 
+    void operator -=(var val) {
+        if (this->state == val.state) {
+            this->varint -= val.varint;
+            this->vardouble -= val.vardouble;
+        }
+    }
+
     void operator *=(int val) {
         if (state == varstate::INT) {
             varint = varint * val;
@@ -129,15 +148,29 @@ public:
         }
     }
 
+    void operator *=(var val) {
+        if (this->state == val.state) {
+            this->varint *= val.varint;
+            this->vardouble *= val.vardouble;
+        }
+    }
+
     void operator /=(int val) {
         if (state == varstate::INT) {
-            varint = varint + val;
+            varint = varint / val;
         }
     }
 
     void operator /=(double val) {
         if (state == varstate::DOUBLE) {
             vardouble = vardouble / val;
+        }
+    }
+
+    void operator /=(var val) {
+        if (this->state == val.state) {
+            this->varint /= val.varint;
+            this->vardouble /= val.vardouble;
         }
     }
 
@@ -282,27 +315,27 @@ public:
     }
 
     /// operator >= 
-    bool operator >(int val) {
+    bool operator >=(int val) {
         if (state == varstate::INT) {
             return (varint >= val);
         }
     }
 
-    bool operator >(char val) {
+    bool operator >=(char val) {
         return false;
     }
 
-    bool operator >(bool val) {
+    bool operator >=(bool val) {
         return false;
     }
 
-    bool operator >(double val) {
+    bool operator >=(double val) {
         if (state == varstate::DOUBLE) {
             return (vardouble >= val);
         }
     }
 
-    bool operator >(var val) {
+    bool operator >=(var val) {
         if (this->state == val.state) {
             if (this->state == varstate::UNDEFINED) {
                 return false;
@@ -326,27 +359,27 @@ public:
     }
 
     /// operator <= 
-    bool operator <(int val) {
+    bool operator <=(int val) {
         if (state == varstate::INT) {
             return (varint <= val);
         }
     }
 
-    bool operator <(char val) {
+    bool operator <=(char val) {
         return false;
     }
 
-    bool operator <(bool val) {
+    bool operator <=(bool val) {
         return false;
     }
 
-    bool operator <(double val) {
+    bool operator <=(double val) {
         if (state == varstate::DOUBLE) {
             return (vardouble <= val);
         }
     }
 
-    bool operator <(var val) {
+    bool operator <=(var val) {
         if (this->state == val.state) {
             if (this->state == varstate::UNDEFINED) {
                 return false;
@@ -368,6 +401,8 @@ public:
             return false;
         }
     }
+
+    /// others
 
     // Debug
     void printvalue() {
@@ -397,6 +432,38 @@ public:
             break;
         }
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const var& var1) {
+        switch (var1.state)
+        {
+        case var::varstate::INT:
+            os << var1.varint << std::endl;
+            break;
+        case var::varstate::CHAR:
+            os << var1.varchar << std::endl;
+            break;
+        case var::varstate::BOOL:
+            if (var1.varbool) {
+                os << "True" << std::endl;
+            }
+            else {
+                os << "False" << std::endl;
+            }
+            break;
+        case var::varstate::DOUBLE:
+            os << var1.vardouble << std::endl;
+            break;
+        case var::varstate::UNDEFINED:
+            os << "undefined" << std::endl;
+            break;
+        default:
+            break;
+        }
+        return os;
+
+    }
+
+    //friend std::fstream& operator>>(std::ostream& os, const var& var1) {}
 
     void printtype() {
         switch (state)
@@ -446,8 +513,8 @@ public:
 
     void printMem() {
         for (int i = 0; i < index; ++i) {
-std::cout << "arr_value[" << i << "]" << " = ";
-arr_value[i].printvalue();
+        std::cout << "arr_value[" << i << "]" << " = ";
+        arr_value[i].printvalue();
         }
     }
 
@@ -471,6 +538,21 @@ arr_value[i].printvalue();
             return tmp;
         }
 
+    }
+
+    void changeValue(str var_name, str var_value) {
+        if (!var_value.find('\'')) {
+            arr_value[returnvarindex(var_name)] = (char)var_value[1];
+        }
+        else if ((var_value == "true") || (var_value == "false")) {
+            arr_value[returnvarindex(var_name)] = (var_value == "false") ? false : true;
+        }
+        else if (intOrDouble(var_value, 0) == false) {
+            arr_value[returnvarindex(var_name)] = std::stod(var_value);
+        }
+        else if (var_value != "undefined") {
+            arr_value[returnvarindex(var_name)] = std::stoi(var_value);
+        }
     }
 
     var arr_value[100];
@@ -577,7 +659,6 @@ int main(int argc, char* argv[]) {
     myCPU mycpu;
     bool skip = false;
 
-
     while (std::getline(inFile, line)) {
         fixSpaces(line);
 
@@ -595,19 +676,15 @@ int main(int argc, char* argv[]) {
                 str var_value = "";
                 var_value = detectWord(line, 9); /// detect var value
 
-                if (!var_value.find('\'')) {
-                    mycpu.arr_value[mycpu.returnvarindex(var_name)] = (char)var_value[1];
+                if (-1 == mycpu.findElement(detectWord(line, 9))) { /// assignig value
+                    mycpu.changeValue(var_name, var_value);
                 }
-                else if ((var_value == "true") || (var_value == "false")) {
-                    mycpu.arr_value[mycpu.returnvarindex(var_name)] = (var_value == "false")? false : true;
+                else { /// assigning var
+                    mycpu.arr_value[mycpu.returnvarindex(var_name)];
+                    int index1 = mycpu.findElement(detectWord(line, 4));
+                    int index2 = mycpu.findElement(detectWord(line, 9));
+                    mycpu.arr_value[index1] = mycpu.arr_value[index2];
                 }
-                else if (intOrDouble(var_value, 0) == false) { /// ???
-                    mycpu.arr_value[mycpu.returnvarindex(var_name)] = std::stod(var_value);
-                }
-                else if (var_value != "undefined"){
-                    mycpu.arr_value[mycpu.returnvarindex(var_name)] = std::stoi(var_value);
-                }
-
             }
             else if (!(line.compare(0, 9, "printval "))) {/// printval function
                 str var_name = "";
@@ -615,7 +692,7 @@ int main(int argc, char* argv[]) {
                 int var_address = mycpu.returnvarindex(var_name);
                 mycpu.arr_value[var_address].printvalue();
             }
-            else if (line[0] == '/' && line[2] == '/') { /// Comment
+            else if (line[0] == '/' && line[1] == '/') { /// Comment
 
             }
             else if (!(line.compare(0, 10, "printtype "))) {/// printtype function
@@ -629,72 +706,107 @@ int main(int argc, char* argv[]) {
                 std::cout << txt << std::endl;
             }
             else if (mycpu.findElement(detectWord(line, 0)) != -1) { /// assigning new value to execting var
-                int index1 = mycpu.findElement(detectWord(line, 0));
-                int index2 = mycpu.findElement(detectWord(line, 5));
-                if ('<' != line[2]) {
-                    str var_value = "";
-                    var_value = detectWord(line, 5); /// detect var value
-                    if ('+' == line[2]) {
-                        if (intOrDouble(var_value, 0) == false) {
-                            mycpu.arr_value[index1].operator+=(std::stod(var_value));
+                if (LOGICAL) { /// +=, -=, *=, /=
+                    str secArg = detectWord(line, 5); /// detect var value
+                    if (-1 != mycpu.findElement(secArg)) {
+                        int index1 = mycpu.findElement(detectWord(line, 0));
+                        int index2 = mycpu.findElement(detectWord(line, 5));
+                        if (line[2] == '+') {
+                            mycpu.arr_value[index1] += mycpu.arr_value[index2];
                         }
-                        else {
-                            mycpu.arr_value[index1].operator+=(std::stoi(var_value));
+                        else if (line[2] == '-') {
+                            mycpu.arr_value[index1] -= mycpu.arr_value[index2];
                         }
-                    }
-                    else if ('-' == line[2]) {
-                        if (intOrDouble(var_value, 0) == false) {
-                            mycpu.arr_value[index1].operator-=(std::stod(var_value));
+                        else if (line[2] == '*') {
+                            mycpu.arr_value[index1] *= mycpu.arr_value[index2];
                         }
-                        else {
-                            mycpu.arr_value[index1].operator-=(std::stoi(var_value));
+                        else if (line[2] == '/') {
+                            mycpu.arr_value[index1] /= mycpu.arr_value[index2];
                         }
                     }
-                    else if ('*' == line[2]) {
-                        if (intOrDouble(var_value, 0) == false) {
-                            mycpu.arr_value[index1].operator*=(std::stod(var_value));
+                    else {
+                        int index1 = mycpu.findElement(detectWord(line, 0));
+                        if (intOrDouble(line, 5)) {
+                            if (line[2] == '+') {
+                                mycpu.arr_value[index1] += std::stoi(secArg);
+                            }
+                            else if (line[2] == '-') {
+                                mycpu.arr_value[index1] -= std::stoi(secArg);
+                            }
+                            else if (line[2] == '*') {
+                                mycpu.arr_value[index1] *= std::stoi(secArg);
+                            }
+                            else if (line[2] == '/') {
+                                mycpu.arr_value[index1] /= std::stoi(secArg);
+                            }
                         }
                         else {
-                            mycpu.arr_value[index1].operator*=(std::stoi(var_value));
+                            if (line[2] == '+') {
+                                mycpu.arr_value[index1] += std::stod(secArg);
+                            }
+                            else if (line[2] == '-') {
+                                mycpu.arr_value[index1] -= std::stod(secArg);
+                            }
+                            else if (line[2] == '*') {
+                                mycpu.arr_value[index1] *= std::stod(secArg);
+                            }
+                            else if (line[2] == '/') {
+                                mycpu.arr_value[index1] /= std::stod(secArg);
+                            }
                         }
                     }
-                    else if ('/' == line[2]) {
-                        if (intOrDouble(var_value, 0) == false) {
-                            mycpu.arr_value[index1].operator/=(std::stod(var_value));
-                        }
-                        else {
-                            mycpu.arr_value[index1].operator/=(std::stoi(var_value));
-                        }
-                    }
-                }
-                else if (-1 != index2) {/// Copy constructor
-                    mycpu.arr_value[index1] = mycpu.arr_value[index2];
                 }
                 else {
-                    bool isConst = false;
-                    str var_name = "";
-                    var_name = detectWord(line, 0); /// detect var name
-                    str var_value = "";
-                    var_value = detectWord(line, 5); /// detect var value
-
-                    /// assigning const
-                    if (!var_value.find('\'')) {
-                        mycpu.arr_value[mycpu.returnvarindex(var_name)]((char)var_value[1]);
-                        isConst = true;
+                    int index1 = mycpu.findElement(detectWord(line, 0));
+                    int index2 = mycpu.findElement(detectWord(line, 5));
+                    if ('<' != line[2]) {
+                        str var_value = "";
+                        var_value = detectWord(line, 5); /// detect var value
+                        if ('+' == line[2]) {
+                            if (intOrDouble(var_value, 0) == false) {
+                                mycpu.arr_value[index1].operator+=(std::stod(var_value));
+                            }
+                            else {
+                                mycpu.arr_value[index1].operator+=(std::stoi(var_value));
+                            }
+                        }
+                        else if ('-' == line[2]) {
+                            if (intOrDouble(var_value, 0) == false) {
+                                mycpu.arr_value[index1].operator-=(std::stod(var_value));
+                            }
+                            else {
+                                mycpu.arr_value[index1].operator-=(std::stoi(var_value));
+                            }
+                        }
+                        else if ('*' == line[2]) {
+                            if (intOrDouble(var_value, 0) == false) {
+                                mycpu.arr_value[index1].operator*=(std::stod(var_value));
+                            }
+                            else {
+                                mycpu.arr_value[index1].operator*=(std::stoi(var_value));
+                            }
+                        }
+                        else if ('/' == line[2]) {
+                            if (intOrDouble(var_value, 0) == false) {
+                                mycpu.arr_value[index1].operator/=(std::stod(var_value));
+                            }
+                            else {
+                                mycpu.arr_value[index1].operator/=(std::stoi(var_value));
+                            }
+                        }
                     }
-                    else if (("true" == var_value) || ("false" == var_value)) {
-                        mycpu.arr_value[mycpu.returnvarindex(var_name)]((var_value == "false") ? false : true);
-                        isConst = true;
+                    else if (-1 != index2) {/// Copy constructor
+                        mycpu.arr_value[index1] = mycpu.arr_value[index2];
                     }
-                    else if (intOrDouble(var_value, 0) == false) {
-                        mycpu.arr_value[mycpu.returnvarindex(var_name)](std::stod(var_value));
-                        isConst = true;
+                    else {
+                        bool isConst = false;
+                        str var_name = "";
+                        var_name = detectWord(line, 0); /// detect var name
+                        str var_value = "";
+                        var_value = detectWord(line, 5); /// detect var value
+                        /// assigning const
+                        mycpu.changeValue(var_name, var_value);
                     }
-                    else if ("undefined" != var_value) {
-                        mycpu.arr_value[mycpu.returnvarindex(var_name)](std::stoi(var_value));
-                        isConst = true;
-                    }
-
                 }
             }
             else if (!(line.compare(0, 5, "when "))) {
