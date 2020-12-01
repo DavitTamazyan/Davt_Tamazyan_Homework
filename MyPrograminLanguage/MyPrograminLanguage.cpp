@@ -2,12 +2,15 @@
 #include<fstream>
 #include<ostream>
 #include<string>
-//#include<vector>
+#include<vector>
 //#include<algorithm>
 
 #define LOGICAL (('+' == line[2] || '-' == line[2] || '*' == line[2] || '/' == line[2]) && '=' == line[3])
 
 using str = std::string;
+
+
+bool intOrDouble(str line, unsigned int index);
 
 class var {
 public:
@@ -92,6 +95,26 @@ public:
         this->varbool = other.varbool;
         this->vardouble = other.vardouble;
         this->state = other.state;
+        return;
+    }    
+    
+    void operator =(str value) {
+        if ('\'' == value[0]) {
+            this->state = varstate::CHAR;
+            this->varchar = (char)value[1];
+        }
+        else if ((value == "true") || (value == "false")) {
+            this->state = varstate::BOOL;
+            this->varbool = (value == "false") ? false : true;
+        }
+        else if (intOrDouble(value, 0) == false) {
+            this->state = varstate::DOUBLE;
+            this->vardouble = std::stod(value);
+        }
+        else if (value != "undefined") {
+            this->state = varstate::INT;
+            this->varint = std::stoi(value);
+        }
         return;
     }
 
@@ -217,7 +240,7 @@ public:
             else if (this->state == varstate::CHAR) {
                 return (this->varchar == val.varchar);
             }
-            else if (this->state == varstate::DOUBLE) {
+            else /*if (this->state == varstate::DOUBLE)*/ {
                 return (this->vardouble == val.vardouble);
             }
         }
@@ -231,6 +254,7 @@ public:
         if (state == varstate::INT) {
             return (varint > val);
         }
+        return false;
     }
 
     bool operator >(char val) {
@@ -245,6 +269,7 @@ public:
         if (state == varstate::DOUBLE) {
             return (vardouble > val);
         }
+        return false;
     }
 
     bool operator >(var val) {
@@ -261,7 +286,7 @@ public:
             else if (this->state == varstate::CHAR) {
                 return false;
             }
-            else if (this->state == varstate::DOUBLE) {
+            else /*if (this->state == varstate::DOUBLE)*/ {
                 return (this->vardouble > val.vardouble);
             }
         }
@@ -275,6 +300,7 @@ public:
         if (state == varstate::INT) {
             return (varint < val);
         }
+        return false;
     }
 
     bool operator <(char val) {
@@ -289,6 +315,7 @@ public:
         if (state == varstate::DOUBLE) {
             return (vardouble < val);
         }
+        return false;
     }
 
     bool operator <(var val) {
@@ -305,7 +332,7 @@ public:
             else if (this->state == varstate::CHAR) {
                 return false;
             }
-            else if (this->state == varstate::DOUBLE) {
+            else /*if (this->state == varstate::DOUBLE) */{
                 return (this->vardouble < val.vardouble);
             }
         }
@@ -409,24 +436,24 @@ public:
         switch (state)
         {
         case var::varstate::INT:
-            std::cout << varint << std::endl;
+            std::cout << varint;
             break;
         case var::varstate::CHAR:
-            std::cout << varchar << std::endl;
+            std::cout << varchar;
             break;
         case var::varstate::BOOL:
             if (varbool) {
-                std::cout << "True" << std::endl;
+                std::cout << "True";
             }
             else {
-                std::cout << "False" << std::endl;
+                std::cout << "False";
             }
             break;
         case var::varstate::DOUBLE:
-            std::cout << vardouble << std::endl;
+            std::cout << vardouble;
             break;
         case var::varstate::UNDEFINED:
-            std::cout << "undefined" << std::endl;
+            std::cout << "undefined";
             break;
         default:
             break;
@@ -460,28 +487,33 @@ public:
             break;
         }
         return os;
-
     }
 
-    //friend std::fstream& operator>>(std::ostream& os, const var& var1) {}
+    friend std::istream& operator>> (std::istream& is, var& test)
+    {
+        str value;
+        is >> value;
+        test = value;
+        return is;
+    }
 
     void printtype() {
         switch (state)
         {
         case var::varstate::INT:
-            std::cout << "INT" << std::endl;
+            std::cout << "INT";
             break;
         case var::varstate::CHAR:
-            std::cout << "CHAR" << std::endl;
+            std::cout << "CHAR";
             break;
         case var::varstate::BOOL:
-            std::cout << "BOOL" << std::endl;
+            std::cout << "BOOL";
             break;
         case var::varstate::DOUBLE:
-            std::cout << "DOUBLE" << std::endl;
+            std::cout << "DOUBLE";
             break;
         case var::varstate::UNDEFINED:
-            std::cout << "UNDEFINED" << std::endl;
+            std::cout << "UNDEFINED";
             break;
         default:
             break;
@@ -595,7 +627,7 @@ str detectWord(str line, unsigned int index) {
     char tmp = 'a';
     int i = 0;
     std::string var_name = "";
-    while ((line[i + index] != ' ') && (line[i + index] != ';') && (line[i + index] != ')')) { /// detecting variable name
+    while ((line[i + index] != ' ') && (line[i + index] != ';') && (line[i + index] != ')') && (line[i + index] != ',')) { /// detecting variable name
         var_name += line[i + index];
         ++i;
     }
@@ -606,10 +638,9 @@ str detectComment(str line, unsigned int index) {
     if (index > line.size()) {
         return "undefined";
     }
-    char tmp = 'a';
     int i = 0;
     std::string var_name = "";
-    while (line[i + index] != ';') { /// detecting variable name
+    while (line[i + index] != ';') { 
         var_name += line[i + index];
         ++i;
     }
@@ -617,7 +648,7 @@ str detectComment(str line, unsigned int index) {
 }
 
 bool intOrDouble(str line, unsigned int index) {
-    for (int i = index; i < line.size(); ++i) {
+    for (uint16_t i = index; i < line.size(); ++i) {
         if (line[i] == '.') {
             return false;
         }
@@ -627,7 +658,7 @@ bool intOrDouble(str line, unsigned int index) {
 
 void fixSpaces(str& line) {
     bool trigger = false;
-    for (int i = 0; i < line.size(); ++i) {
+    for (uint16_t i = 0; i < line.size(); ++i) {
         if ((' ' == line[i]) && trigger) {
             line.erase(i, 1);
             --i;
@@ -649,6 +680,23 @@ void fixSpaces(str& line) {
     }
 }
 
+str readforarguments(int* forreg, str line) {
+    str var_name = detectWord(line, 4); /// detecting for variable name
+    int var_name_size = var_name.size(); /// var name saze
+    ////// detecting start point
+    str start_point = detectWord(line, 15 + var_name_size);
+    int start_point_size = start_point.size();
+    forreg[0] = std::stoi(start_point); 
+    ////// detecting end point
+    str end_point = detectWord(line, 17 + var_name_size + start_point_size);
+    int end_point_size = end_point.size(); 
+    forreg[1] = std::stoi(end_point);
+    ////// detecting steep
+    str steep = detectWord(line, 19 + var_name_size + start_point_size + end_point_size);
+    forreg[2] = std::stoi(steep);
+
+    return var_name; /// returning var name for creating var from main
+}
 /// Top
 int main(int argc, char* argv[]) {
     //ArgumentCheck(argc, argv, 2);
@@ -658,25 +706,77 @@ int main(int argc, char* argv[]) {
     std::string line = "";
     myCPU mycpu;
     bool skip = false;
+    bool skip1 = false;
+    bool otherwise = false;
+    uint16_t line_number = 1;
+    bool eof = false;
+    bool forcycle = false;
+    int forreg[3] = {}; /// forreg[0] = forvarstart, forreg[1] = forvarend, forreg[2] = forvarsteep,
+    bool for_start = true;
 
-    while (std::getline(inFile, line)) {
+    std::vector<str> forlines;
+    int for_line = 0;
+    int forvar = 0;
+    int forvarindex = 0;
+
+    while (!eof) {
+
+        if (false == forcycle) {
+            if (!(std::getline(inFile, line))) {
+                eof = true;
+                continue;
+            }
+        }
+        else {
+            if (mycpu.arr_value[forvarindex] < forreg[1]) {
+                if (for_line < forlines.size()) {
+                    line = forlines[for_line];
+                    for_line++;
+                }
+                else {
+                    for_line = 0;
+                    mycpu.arr_value[forvarindex] += forreg[2];
+                    continue;
+                }
+            }
+            else {
+                forcycle = false;
+                continue;
+            }
+        }
+        
+
         fixSpaces(line);
 
+        /// if - else (please change skip and skip1 names *** )
         if (skip) {
             if ("end" == line) {
                 skip = false;
+                otherwise = true;
             }
             continue;
         }
 
-        if (!line.empty()) { /// ignoring empty line
+        if ((line == "otherwise" && !otherwise) || skip1) {
+            skip1 = true;
+            if ("end" == line) {
+                otherwise = true;
+                skip1 = false;
+            }
+            continue;
+        }
+        /// end
+
+        if (!line.empty() && !('/' == line[0] && '/' == line[1])) { /// ignoring empty line and comment
             if (!(line.compare(0, 4, "var "))) { /// declaration of var
                 str var_name = "";
                 var_name = detectWord(line, 4); /// detect var name
-                str var_value = "";
-                var_value = detectWord(line, 9); /// detect var value
-
-                if (-1 == mycpu.findElement(detectWord(line, 9))) { /// assignig value
+                if (';' == line[5]) {
+                    mycpu.returnvarindex(var_name);
+                }
+                else if (-1 == mycpu.findElement(detectWord(line, 9))) { /// assignig value
+                    str var_value = "";
+                    var_value = detectWord(line, 9); /// detect var value
                     mycpu.changeValue(var_name, var_value);
                 }
                 else { /// assigning var
@@ -685,15 +785,13 @@ int main(int argc, char* argv[]) {
                     int index2 = mycpu.findElement(detectWord(line, 9));
                     mycpu.arr_value[index1] = mycpu.arr_value[index2];
                 }
+
             }
             else if (!(line.compare(0, 9, "printval "))) {/// printval function
                 str var_name = "";
                 var_name = detectWord(line, 9); /// detect var name
                 int var_address = mycpu.returnvarindex(var_name);
                 mycpu.arr_value[var_address].printvalue();
-            }
-            else if (line[0] == '/' && line[1] == '/') { /// Comment
-
             }
             else if (!(line.compare(0, 10, "printtype "))) {/// printtype function
                 str var_name = "";
@@ -703,7 +801,12 @@ int main(int argc, char* argv[]) {
             }
             else if ((!(line.compare(0, 9, "printtxt ")))) {
                 str txt = detectComment(line, 9);
-                std::cout << txt << std::endl;
+                if (txt == "NewLine") {
+                    std::cout << std::endl;
+                }
+                else {
+                    std::cout << txt;
+                }
             }
             else if (mycpu.findElement(detectWord(line, 0)) != -1) { /// assigning new value to execting var
                 if (LOGICAL) { /// +=, -=, *=, /=
@@ -805,6 +908,7 @@ int main(int argc, char* argv[]) {
                         str var_value = "";
                         var_value = detectWord(line, 5); /// detect var value
                         /// assigning const
+                        //std::cout << "Var name = " << var_name << "Var value = " << var_value << std::endl;
                         mycpu.changeValue(var_name, var_value);
                     }
                 }
@@ -826,7 +930,14 @@ int main(int argc, char* argv[]) {
                 else {
                     int index1 = mycpu.findElement(detectWord(line, 6));
                     str value = detectWord(line, 10);
-                    if (intOrDouble(value, 0) == false) {
+
+                    if (value[0] == '\'') {
+                        skip = !(mycpu.arr_value[index1] == value[1]);
+                    }
+                    else if ((value == "true") || (value == "false")) {
+
+                    }
+                    else if (intOrDouble(value, 0) == false) {
                         if (line[8] == '=') {
                             skip = !(mycpu.arr_value[index1] == std::stod(value));
                         }
@@ -836,12 +947,6 @@ int main(int argc, char* argv[]) {
                         else if (line[8] == '<') {
                             skip = !(mycpu.arr_value[index1] < std::stod(value));
                         }
-
-                    }
-                    else if (value[0] == '\'') {
-                        skip = !(mycpu.arr_value[index1] == value[1]);
-                    }
-                    else if ((value == "true") || (value == "false")) {
 
                     }
                     else {
@@ -857,7 +962,32 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+            else if (!(line.compare(0, 8, "takeval "))) {
+                str var_name = "";
+                var_name = detectWord(line, 8); /// detect var name
+                int var_address = mycpu.returnvarindex(var_name); /// detect var addres
+                std::cin >> mycpu.arr_value[var_address];
+            }
+            else if (!(line.compare(0, 4, "for "))) {
+                forvarindex = mycpu.returnvarindex(readforarguments(forreg, line));
+                mycpu.arr_value[forvarindex] = forreg[0];
+                forcycle = true;
+                std::getline(inFile, line);
+                while ("end" != line) {
+                    forlines.push_back(line);
+                    std::getline(inFile, line);
+                }
+            }
+            else if ("end" == line || "otherwise" == line) {
+
+            }
+            else {
+                std::cout << "!!! Unknown Line !!!" << std::endl;
+                std::cout << "Line " << line_number << " :: " << line << std::endl;
+                exit(1);
+            }
         }
+        ++line_number; /// update line_number
     }
     inFile.close();
 }
