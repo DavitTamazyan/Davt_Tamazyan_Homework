@@ -569,6 +569,9 @@ public:
         else {
             return tmp;
         }
+    }
+
+    void delete_element(int index) {
 
     }
 
@@ -639,12 +642,20 @@ str detectComment(str line, unsigned int index) {
         return "undefined";
     }
     int i = 0;
-    std::string var_name = "";
+    std::string comment = "";
     while (line[i + index] != ';') { 
-        var_name += line[i + index];
+        comment += line[i + index];
         ++i;
     }
-    return var_name;
+    if (comment[0] == '/') {
+        comment.erase(0, 1);
+    }
+    
+    if (comment[comment.size() - 1] == '/') {
+        comment.erase((comment.size() - 1), 1);
+    }
+
+    return comment;
 }
 
 bool intOrDouble(str line, unsigned int index) {
@@ -658,8 +669,15 @@ bool intOrDouble(str line, unsigned int index) {
 
 void fixSpaces(str& line) {
     bool trigger = false;
+    bool skip = false;
     for (uint16_t i = 0; i < line.size(); ++i) {
-        if ((' ' == line[i]) && trigger) {
+        if ('/' == line[i] || skip) {
+            skip = true;
+        }
+        else if ('\\' == line[i]) {
+            skip = false;
+        }
+        else if ((' ' == line[i]) && trigger) {
             line.erase(i, 1);
             --i;
         }
@@ -712,7 +730,6 @@ int main(int argc, char* argv[]) {
     bool eof = false;
     bool forcycle = false;
     int forreg[3] = {}; /// forreg[0] = forvarstart, forreg[1] = forvarend, forreg[2] = forvarsteep,
-    bool for_start = true;
 
     std::vector<str> forlines;
     int for_line = 0;
@@ -721,6 +738,7 @@ int main(int argc, char* argv[]) {
 
     while (!eof) {
 
+        /// For
         if (false == forcycle) {
             if (!(std::getline(inFile, line))) {
                 eof = true;
@@ -744,8 +762,8 @@ int main(int argc, char* argv[]) {
                 continue;
             }
         }
+        ///end
         
-
         fixSpaces(line);
 
         /// if - else (please change skip and skip1 names *** )
@@ -760,7 +778,7 @@ int main(int argc, char* argv[]) {
         if ((line == "otherwise" && !otherwise) || skip1) {
             skip1 = true;
             if ("end" == line) {
-                otherwise = true;
+                otherwise = false;
                 skip1 = false;
             }
             continue;
